@@ -14,7 +14,8 @@ from typing import List, Optional, Dict, Any
 from .base import Simulation, SimulationContext
 from .agents.developer import Developer
 from .models.types import PRState, CommunicationOverheadModel
-from .models.work import PullRequest, CodeReview
+from .models.work import PullRequest, CodeReview, Incident
+from .models.technical_debt import TechnicalDebtTracker
 
 
 class SDLCSimulation(Simulation):
@@ -63,6 +64,18 @@ class SDLCSimulation(Simulation):
 
         self.all_reviews: List[CodeReview] = []
 
+        # Technical debt
+        self.tech_debt = TechnicalDebtTracker()
+
+        # Incidents
+        self.active_incidents: List[Incident] = []
+        self.resolved_incidents: List[Incident] = []
+        self.all_incidents: List[Incident] = []
+
+        # Configuration
+        self.incident_rate: float = 0.05  # 5% chance per week per developer
+        self.tech_debt_accumulation_rate: float = 0.15  # 15% of low-quality PRs create debt
+
     @property
     def developers(self) -> List[Developer]:
         """Get all Developer agents in the simulation."""
@@ -88,8 +101,10 @@ class SDLCSimulation(Simulation):
         3. Developers work on reviews
         4. Merge approved PRs
         5. Randomly revert failed PRs (quality issues)
-        6. Agents take their steps
-        7. Update metrics
+        6. Generate technical debt from low-quality PRs
+        7. Generate random incidents
+        8. Agents take their steps
+        9. Update metrics
         """
         context = self.get_context()
 
@@ -106,6 +121,12 @@ class SDLCSimulation(Simulation):
 
         # 6. Simulate quality issues (reverts)
         self._process_quality_issues(context)
+
+        # 7. Generate technical debt
+        self._generate_technical_debt(context)
+
+        # 8. Generate incidents
+        self._generate_incidents(context)
 
         self.current_timestep += 1
 
@@ -230,6 +251,122 @@ class SDLCSimulation(Simulation):
                 return dev
         return None
 
+    def _generate_technical_debt(self, context: SimulationContext) -> None:
+        """
+        Generate technical debt from recently merged low-quality PRs.
+
+        Technical debt accumulates when PRs are merged that:
+        - Have low code quality
+        - Are merged without sufficient review
+        - Are rushed implementations
+        """
+        # Check recently merged PRs (last 7 days)
+        recent_cutoff = max(0, context.current_day - 7)
+
+        recent_prs = [
+            pr for pr in self.merged_prs
+            if pr.merged_at and pr.merged_at >= recent_cutoff
+            and not pr.was_reverted
+        ]
+
+        for pr in recent_prs:
+            # PRs that won't succeed might create tech debt instead of being reverted
+            if not pr.will_succeed and random.random() < self.tech_debt_accumulation_rate:
+                # Determine severity based on quality
+                # Lower quality = higher severity debt
+                author = self._get_developer_by_id(pr.author_id)
+                if author:
+                    quality = author.config.code_quality
+                    severity = 2.0 - quality  # 0.85 quality -> 1.15 severity
+
+                    debt = self.tech_debt.add_debt(
+                        created_at=context.current_day,
+                        caused_by_pr=pr.pr_id,
+                        severity=severity
+                    )
+
+                    self.log_event(
+                        event_type="tech_debt_created",
+                        agent_id=pr.author_id,
+                        data={
+                            "debt_id": debt.debt_id,
+                            "pr_id": pr.pr_id,
+                            "severity": severity
+                        }
+                    )
+
+    def _generate_incidents(self, context: SimulationContext) -> None:
+        """
+        Generate random production incidents.
+
+        Incident probability is influenced by:
+        - Team size (more developers = more chances)
+        - Recent PR quality (more reverts = more incidents)
+        - Technical debt (more debt = more incidents)
+        """
+        # Base incident rate: X% chance per week per developer
+        daily_incident_rate = self.incident_rate / 7.0
+
+        # Adjust for technical debt (more debt = more incidents)
+        debt_multiplier = 1.0 + self.tech_debt.get_total_productivity_impact()
+
+        # Adjust for recent quality issues
+        recent_reverts = len([
+            pr for pr in self.reverted_prs
+            if pr.reverted_at and pr.reverted_at >= context.current_day - 7
+        ])
+        quality_multiplier = 1.0 + (recent_reverts * 0.1)
+
+        # Calculate final incident probability
+        incident_probability = daily_incident_rate * debt_multiplier * quality_multiplier
+
+        # Each developer has a chance to trigger an incident
+        for dev in self.developers:
+            if random.random() < incident_probability:
+                # Create incident
+                severity_roll = random.random()
+                if severity_roll < 0.1:
+                    severity = "critical"
+                    estimated_hours = 16.0
+                elif severity_roll < 0.3:
+                    severity = "high"
+                    estimated_hours = 12.0
+                elif severity_roll < 0.7:
+                    severity = "medium"
+                    estimated_hours = 8.0
+                else:
+                    severity = "low"
+                    estimated_hours = 4.0
+
+                incident = Incident(
+                    created_at=context.current_day,
+                    severity=severity,
+                    estimated_hours=estimated_hours
+                )
+
+                # Assign to a random developer (or multiple for critical)
+                if severity == "critical":
+                    # Assign to 2-3 developers for critical incidents
+                    num_assignees = min(len(self.developers), random.randint(2, 3))
+                    assignees = random.sample(self.developers, num_assignees)
+                else:
+                    assignees = [random.choice(self.developers)]
+
+                for assignee in assignees:
+                    incident.assign(assignee.agent_id)
+
+                self.active_incidents.append(incident)
+                self.all_incidents.append(incident)
+
+                self.log_event(
+                    event_type="incident_created",
+                    data={
+                        "incident_id": incident.incident_id,
+                        "severity": severity,
+                        "assigned_to": incident.assigned_to
+                    }
+                )
+
     def calculate_communication_overhead(self, team_size: int) -> float:
         """
         Calculate communication overhead factor based on team size.
@@ -286,6 +423,16 @@ class SDLCSimulation(Simulation):
         # Calculate communication overhead
         comm_overhead = self.calculate_communication_overhead(total_devs)
 
+        # Technical debt stats
+        debt_stats = self.tech_debt.get_stats()
+
+        # Incident stats
+        total_incidents = len(self.all_incidents)
+        active_incident_count = len(self.active_incidents)
+        resolved_incidents = [i for i in self.all_incidents if i.is_resolved]
+        mttr_values = [i.time_to_resolve for i in resolved_incidents if i.time_to_resolve is not None]
+        avg_mttr = sum(mttr_values) / len(mttr_values) if mttr_values else 0
+
         return {
             "current_day": self.current_timestep,
             "current_week": self.current_timestep // 7,
@@ -298,6 +445,16 @@ class SDLCSimulation(Simulation):
             "change_failure_rate": round(change_failure_rate, 3),
             "prs_per_week": round(prs_per_week, 2),
             "communication_overhead": round(comm_overhead, 2),
+            # Technical debt metrics
+            "tech_debt_count": debt_stats["active_debt_count"],
+            "tech_debt_productivity_impact": round(debt_stats["productivity_impact"], 3),
+            "tech_debt_total_created": debt_stats["total_debt_created"],
+            "tech_debt_total_paid": debt_stats["total_debt_paid"],
+            # Incident metrics
+            "total_incidents": total_incidents,
+            "active_incidents": active_incident_count,
+            "resolved_incidents": len(resolved_incidents),
+            "avg_mttr_days": round(avg_mttr, 2),
         }
 
     def print_summary(self) -> None:
@@ -316,10 +473,20 @@ class SDLCSimulation(Simulation):
         print(f"  PRs Merged: {metrics['total_prs_merged']}")
         print(f"  PRs Reverted: {metrics['total_prs_reverted']}")
         print(f"  Open PRs: {metrics['open_prs']}")
-        print(f"\nMetrics:")
+        print(f"\nQuality Metrics:")
         print(f"  Avg Cycle Time: {metrics['avg_cycle_time_days']} days")
         print(f"  Change Failure Rate: {metrics['change_failure_rate']:.1%}")
         print(f"  Throughput: {metrics['prs_per_week']} PRs/week")
+        print(f"\nTechnical Debt:")
+        print(f"  Active Debt Items: {metrics['tech_debt_count']}")
+        print(f"  Productivity Impact: {metrics['tech_debt_productivity_impact']:.1%}")
+        print(f"  Total Created: {metrics['tech_debt_total_created']}")
+        print(f"\nIncidents:")
+        print(f"  Total Incidents: {metrics['total_incidents']}")
+        print(f"  Active: {metrics['active_incidents']}")
+        print(f"  Resolved: {metrics['resolved_incidents']}")
+        if metrics['avg_mttr_days'] > 0:
+            print(f"  Avg MTTR: {metrics['avg_mttr_days']} days")
         print(f"{'='*60}\n")
 
     # Event tracking convenience methods

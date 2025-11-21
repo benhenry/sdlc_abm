@@ -1,0 +1,81 @@
+# Rapid Growth Scenario
+# Simulating what happens when you rapidly scale a team
+
+name: "Rapid Team Growth"
+description: "Start with 3 senior engineers, add 7 junior engineers in week 4"
+tags:
+  - growth
+  - scaling
+  - onboarding
+
+team:
+  developers:
+    # Initial senior team (started at week 0)
+    - name: "Alice"
+      experience_level: "senior"
+      productivity_rate: 4.2
+      code_quality: 0.92
+      availability: 0.65  # Lower due to mentoring new hires
+
+    - name: "Bob"
+      experience_level: "senior"
+      productivity_rate: 4.0
+      code_quality: 0.90
+      availability: 0.65
+
+    - name: "Carol"
+      experience_level: "staff"
+      productivity_rate: 4.5
+      code_quality: 0.95
+      availability: 0.60  # Lots of mentoring and coordination
+
+    # New hires joining in week 4 (would need to add manually in code for now)
+    # Future: Support time-based agent addition in config
+    - name: "David"
+      experience_level: "junior"
+      productivity_rate: 2.0
+      code_quality: 0.70
+      onboarding_time: 16
+
+    - name: "Eve"
+      experience_level: "junior"
+      productivity_rate: 1.8
+      code_quality: 0.68
+      onboarding_time: 18
+
+    - name: "Frank"
+      experience_level: "junior"
+      productivity_rate: 2.2
+      code_quality: 0.72
+      onboarding_time: 15
+
+    - name: "Grace"
+      experience_level: "junior"
+      productivity_rate: 1.9
+      code_quality: 0.69
+      onboarding_time: 17
+
+    - name: "Hank"
+      experience_level: "mid"
+      productivity_rate: 3.0
+      code_quality: 0.80
+      onboarding_time: 12
+
+    - name: "Iris"
+      experience_level: "mid"
+      productivity_rate: 3.2
+      code_quality: 0.82
+      onboarding_time: 11
+
+    - name: "Jack"
+      experience_level: "junior"
+      productivity_rate: 2.0
+      code_quality: 0.71
+      onboarding_time: 16
+
+simulation:
+  duration_weeks: 24  # 6 months to see onboarding impact
+  timestep_days: 1
+  random_seed: 456
+  communication_loss_factor: 0.35  # Moderate loss with rapid growth
+  communication_overhead_model: "quadratic"  # Brooks' Law in action!

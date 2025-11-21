@@ -1,0 +1,63 @@
+# Small Team Scenario
+# A focused 5-person team with mixed experience levels
+
+name: "Small Focused Team"
+description: "A 5-person team with good communication and high availability"
+tags:
+  - small-team
+  - baseline
+author: "SDLC SimLab"
+
+team:
+  developers:
+    - name: "Alice"
+      experience_level: "senior"
+      productivity_rate: 4.0
+      code_quality: 0.90
+      review_capacity: 6.0
+      onboarding_time: 6
+      availability: 0.75
+      meeting_hours_per_week: 6.0
+
+    - name: "Bob"
+      experience_level: "senior"
+      productivity_rate: 3.8
+      code_quality: 0.88
+      review_capacity: 5.5
+      onboarding_time: 6
+      availability: 0.70
+      meeting_hours_per_week: 7.0
+
+    - name: "Carol"
+      experience_level: "mid"
+      productivity_rate: 3.5
+      code_quality: 0.85
+      review_capacity: 5.0
+      onboarding_time: 10
+      availability: 0.75
+      meeting_hours_per_week: 5.0
+
+    - name: "David"
+      experience_level: "mid"
+      productivity_rate: 3.3
+      code_quality: 0.83
+      review_capacity: 5.0
+      onboarding_time: 10
+      availability: 0.72
+      meeting_hours_per_week: 5.0
+
+    - name: "Eve"
+      experience_level: "junior"
+      productivity_rate: 2.5
+      code_quality: 0.75
+      review_capacity: 3.0
+      onboarding_time: 16
+      availability: 0.70
+      meeting_hours_per_week: 5.0
+
+simulation:
+  duration_weeks: 12
+  timestep_days: 1
+  random_seed: 42
+  communication_loss_factor: 0.2  # Good communication (co-located, well-aligned)
+  communication_overhead_model: "quadratic"

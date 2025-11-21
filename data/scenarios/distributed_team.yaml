@@ -1,0 +1,23 @@
+# Distributed Team Scenario
+# A 10-person distributed team with higher communication overhead
+
+name: "Distributed Team"
+description: "A distributed team across multiple time zones with async communication"
+tags:
+  - distributed
+  - remote
+  - medium-team
+
+team:
+  # Use distribution to quickly generate team
+  distribution:
+    senior: 2
+    mid: 5
+    junior: 3
+
+simulation:
+  duration_weeks: 26  # 6 months
+  timestep_days: 1
+  random_seed: 123
+  communication_loss_factor: 0.5  # Higher loss due to distributed nature
+  communication_overhead_model: "quadratic"

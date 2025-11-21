@@ -1,0 +1,67 @@
+name: Historical Team Analysis
+description: Generated from historical data (2024-01-02 to 2024-02-02)
+team:
+  developers:
+  - name: alice
+    experience_level: mid
+    productivity_rate: 2.25
+    code_quality: 0.98
+    review_capacity: 6.5
+    onboarding_time: 0
+    communication_bandwidth: 7.0
+    availability: 0.7
+    specializations: []
+    meeting_hours_per_week: 5.0
+  - name: bob
+    experience_level: mid
+    productivity_rate: 2.0
+    code_quality: 0.75
+    review_capacity: 3.0
+    onboarding_time: 0
+    communication_bandwidth: 7.0
+    availability: 0.7
+    specializations: []
+    meeting_hours_per_week: 5.0
+  - name: carol
+    experience_level: mid
+    productivity_rate: 2.0
+    code_quality: 0.98
+    review_capacity: 3.0
+    onboarding_time: 0
+    communication_bandwidth: 7.0
+    availability: 0.7
+    specializations: []
+    meeting_hours_per_week: 5.0
+  - name: david
+    experience_level: mid
+    productivity_rate: 2.0
+    code_quality: 0.98
+    review_capacity: 1.0
+    onboarding_time: 0
+    communication_bandwidth: 7.0
+    availability: 0.7
+    specializations: []
+    meeting_hours_per_week: 5.0
+  - name: eve
+    experience_level: mid
+    productivity_rate: 1.75
+    code_quality: 0.98
+    review_capacity: 1.0
+    onboarding_time: 0
+    communication_bandwidth: 7.0
+    availability: 0.7
+    specializations: []
+    meeting_hours_per_week: 5.0
+  count: null
+  distribution: null
+simulation:
+  duration_weeks: 4
+  timestep_days: 1
+  random_seed: null
+  communication_loss_factor: 0.3
+  communication_overhead_model: quadratic
+tags:
+- historical
+- imported
+author: null
+created_at: null

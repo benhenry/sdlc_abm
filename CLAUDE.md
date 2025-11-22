@@ -94,6 +94,37 @@ Each agent has configurable attributes:
 | Specialization | List[String] | Technical domains | [] |
 | Availability | Float (0-1) | % time available | 0.70 |
 
+### AI Agent Attributes
+
+**NEW: AI Agents for Agentic Development**
+
+AI Agents extend the Developer model with characteristics specific to AI-powered code generation. They can be intermixed with human developers to explore team compositions and productivity trade-offs.
+
+| Attribute | Type | Description | Default |
+|-----------|------|-------------|---------|
+| Model Type | Enum | GPT-4, Claude Sonnet, Claude Opus, CodeLlama | Claude Sonnet |
+| Productivity Rate | Float | PRs per week (24/7 operation) | 8.0-12.0 |
+| Code Quality | Float (0-1) | PR success rate | 0.80-0.88 |
+| Supervision Requirement | Float (0-1) | Human oversight needed | 0.20-0.35 |
+| Cost Per PR | Float | API/compute cost in USD | $0.10-$0.80 |
+| Requires Human Review | Boolean | All AI PRs need human approval | True |
+| Can Review Human PRs | Boolean | AI can review human work | False |
+
+**Key Differences from Human Developers:**
+- **24/7 Availability**: No downtime, meetings, or context switching
+- **Zero Onboarding**: Instant productivity, no ramp-up time
+- **Scalability**: Can add many AI agents without communication overhead
+- **Asymmetric Review**: Humans review AI work, but not vice versa
+- **Cost Structure**: Per-PR API costs instead of salary
+- **Quality Profile**: Consistent but may have different error patterns
+
+**Use Cases for Simulation:**
+- Compare "5 humans + 4 AI" vs "7 humans" team compositions
+- Analyze diminishing returns of adding AI agents
+- Understand human review burden from AI-generated PRs
+- Calculate cost-benefit of AI augmentation
+- Optimize human/AI ratio for different workloads
+
 ### Communication Model
 
 **Communication Loss Factor** (0-1): Information degradation parameter
@@ -240,6 +271,12 @@ python manage.py runserver             # If using Django
 # Linting & formatting
 ruff check src/                        # Linting
 ruff format src/                       # Formatting
+
+# Run example simulations
+python examples/basic_simulation.py              # Basic human-only team
+python examples/mixed_team_simulation.py         # Human + AI agent teams
+python examples/import_historical_data.py        # Import CSV data
+python examples/run_scenario.py scenario.yaml    # Run from config file
 ```
 
 ### React Frontend

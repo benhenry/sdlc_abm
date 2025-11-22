@@ -1,0 +1,31 @@
+# Quick Mixed Team Configuration
+#
+# This demonstrates the quick-generation syntax for creating
+# mixed teams without explicit configuration for each member.
+
+name: "Quick Mixed Team: Auto-Generated"
+description: |
+  Quickly create a mixed team using the count-based generation.
+  7 humans (by distribution) + 6 AI agents (Claude Sonnet).
+
+tags:
+  - mixed-team
+  - quick-config
+
+team:
+  # Auto-generate human developers by experience distribution
+  distribution:
+    senior: 2
+    mid: 4
+    junior: 1
+
+  # Auto-generate AI agents
+  ai_count: 6
+  ai_model_type: "claude-sonnet"
+
+simulation:
+  duration_weeks: 12
+  timestep_days: 1
+  random_seed: 42
+  communication_loss_factor: 0.3
+  communication_overhead_model: "quadratic"

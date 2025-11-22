@@ -17,8 +17,9 @@ except ImportError:
 
 from pydantic import BaseModel, Field, field_validator
 
-from .models.types import ExperienceLevel, CommunicationOverheadModel
+from .models.types import ExperienceLevel, CommunicationOverheadModel, AIModelType
 from .agents.developer import DeveloperConfig
+from .agents.ai_agent import AIAgentConfig
 
 
 class DeveloperConfigModel(BaseModel):
@@ -60,21 +61,68 @@ class DeveloperConfigModel(BaseModel):
         )
 
 
-class TeamConfigModel(BaseModel):
-    """Configuration for a team of developers."""
+class AIAgentConfigModel(BaseModel):
+    """Pydantic model for AI agent configuration."""
 
+    name: Optional[str] = None
+    model_type: str = Field(default="claude-sonnet", description="AI model type")
+    productivity_rate: Optional[float] = Field(default=None, ge=0.0, description="PRs per week (24/7)")
+    code_quality: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="PR success rate")
+    supervision_requirement: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Human oversight needed")
+    cost_per_pr: Optional[float] = Field(default=None, ge=0.0, description="Cost per PR in USD")
+    requires_human_review: bool = Field(default=True, description="Requires human review")
+    can_review_human_prs: bool = Field(default=False, description="Can review human PRs")
+    can_review_ai_prs: bool = Field(default=False, description="Can review AI PRs")
+    specializations: List[str] = Field(default_factory=list)
+
+    @field_validator('model_type')
+    @classmethod
+    def validate_model_type(cls, v: str) -> str:
+        """Validate AI model type."""
+        valid = {"gpt4", "claude-sonnet", "claude-opus", "codellama", "custom"}
+        if v.lower() not in valid:
+            raise ValueError(f"Model type must be one of: {valid}")
+        return v.lower()
+
+    def to_ai_agent_config(self) -> AIAgentConfig:
+        """Convert to AIAgentConfig dataclass."""
+        return AIAgentConfig(
+            name=self.name,
+            model_type=AIModelType(self.model_type),
+            productivity_rate=self.productivity_rate,
+            code_quality=self.code_quality,
+            supervision_requirement=self.supervision_requirement,
+            cost_per_pr=self.cost_per_pr,
+            requires_human_review=self.requires_human_review,
+            can_review_human_prs=self.can_review_human_prs,
+            can_review_ai_prs=self.can_review_ai_prs,
+            specializations=self.specializations,
+        )
+
+
+class TeamConfigModel(BaseModel):
+    """Configuration for a team of developers (human and AI)."""
+
+    # Human developers
     developers: List[DeveloperConfigModel] = Field(default_factory=list)
 
-    # Quick team generation
-    count: Optional[int] = Field(default=None, description="Auto-generate N developers")
+    # AI agents
+    ai_agents: List[AIAgentConfigModel] = Field(default_factory=list)
+
+    # Quick team generation for humans
+    count: Optional[int] = Field(default=None, description="Auto-generate N human developers")
     distribution: Optional[Dict[str, int]] = Field(
         default=None,
         description="Auto-generate team by experience: {'senior': 2, 'mid': 3, 'junior': 1}"
     )
 
+    # Quick AI agent generation
+    ai_count: Optional[int] = Field(default=None, description="Auto-generate N AI agents")
+    ai_model_type: str = Field(default="claude-sonnet", description="Model type for auto-generated AI agents")
+
     def get_developers(self) -> List[DeveloperConfig]:
         """
-        Get list of DeveloperConfig objects.
+        Get list of DeveloperConfig objects for human developers.
 
         Can auto-generate based on count or distribution.
         """
@@ -98,6 +146,29 @@ class TeamConfigModel(BaseModel):
                         name=f"{level_str.capitalize()}-{i+1}",
                         experience_level=level
                     ))
+
+        return configs
+
+    def get_ai_agents(self) -> List[AIAgentConfig]:
+        """
+        Get list of AIAgentConfig objects for AI agents.
+
+        Can auto-generate based on ai_count.
+        """
+        configs = []
+
+        # Explicit AI agents
+        for ai_model in self.ai_agents:
+            configs.append(ai_model.to_ai_agent_config())
+
+        # Auto-generate from count
+        if self.ai_count is not None and self.ai_count > 0:
+            model_type = AIModelType(self.ai_model_type.lower())
+            for i in range(self.ai_count):
+                configs.append(AIAgentConfig(
+                    name=f"AI-{model_type.value}-{i+1}",
+                    model_type=model_type
+                ))
 
         return configs
 

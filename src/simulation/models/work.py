@@ -3,7 +3,7 @@ Work-related models: Pull Requests, Reviews, Incidents, etc.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from uuid import uuid4
 
 from .types import PRState
@@ -41,6 +41,9 @@ class PullRequest:
 
     # Communication loss impact
     requirements_clarity: float = 1.0  # 0-1, affected by communication loss
+
+    # Metadata for tracking additional information (e.g., AI-generated, model type)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     def open(self, timestep: int) -> None:
         """Mark PR as open for review."""

@@ -13,6 +13,7 @@ from typing import List, Optional, Dict, Any
 
 from .base import Simulation, SimulationContext
 from .agents.developer import Developer
+from .agents.ai_agent import AIAgent
 from .models.types import PRState, CommunicationOverheadModel
 from .models.work import PullRequest, CodeReview, Incident
 from .models.technical_debt import TechnicalDebtTracker
@@ -78,18 +79,42 @@ class SDLCSimulation(Simulation):
 
     @property
     def developers(self) -> List[Developer]:
-        """Get all Developer agents in the simulation."""
+        """Get all Developer agents in the simulation (includes both human and AI)."""
         return [agent for agent in self.agents if isinstance(agent, Developer)]
+
+    @property
+    def human_developers(self) -> List[Developer]:
+        """Get only human Developer agents (excludes AI agents)."""
+        return [agent for agent in self.agents
+                if isinstance(agent, Developer) and not isinstance(agent, AIAgent)]
+
+    @property
+    def ai_agents(self) -> List[AIAgent]:
+        """Get only AI Agent agents."""
+        return [agent for agent in self.agents if isinstance(agent, AIAgent)]
 
     def add_developer(self, developer: Developer) -> None:
         """
         Add a developer to the simulation.
 
+        Works for both human developers and AI agents.
+
         Args:
-            developer: Developer agent to add
+            developer: Developer or AIAgent to add
         """
         developer.set_simulation(self)
         self.add_agent(developer)
+
+    def add_ai_agent(self, ai_agent: AIAgent) -> None:
+        """
+        Add an AI agent to the simulation.
+
+        This is a convenience method, equivalent to add_developer().
+
+        Args:
+            ai_agent: AI agent to add
+        """
+        self.add_developer(ai_agent)
 
     def step(self) -> None:
         """
@@ -134,6 +159,10 @@ class SDLCSimulation(Simulation):
         """
         Assign reviewers to PRs that need review.
 
+        Special handling for AI-generated PRs:
+        - AI PRs require human reviewers only
+        - Human PRs can be reviewed by anyone (humans or AI, if AI can review)
+
         Uses a simple round-robin approach for now.
         Future: Could be weighted by expertise, availability, etc.
         """
@@ -149,11 +178,27 @@ class SDLCSimulation(Simulation):
             if not author:
                 continue
 
+            # Check if this is an AI-generated PR
+            is_ai_pr = pr.metadata.get('created_by_ai', False)
+
             # Find available reviewers (not the author)
-            available_reviewers = [
-                dev for dev in self.developers
-                if dev.agent_id != pr.author_id and dev.agent_id not in pr.reviewers
-            ]
+            if is_ai_pr:
+                # AI PRs can only be reviewed by humans
+                available_reviewers = [
+                    dev for dev in self.human_developers
+                    if dev.agent_id != pr.author_id and dev.agent_id not in pr.reviewers
+                ]
+            else:
+                # Human PRs can be reviewed by anyone capable
+                available_reviewers = [
+                    dev for dev in self.developers
+                    if dev.agent_id != pr.author_id
+                    and dev.agent_id not in pr.reviewers
+                    and (
+                        not isinstance(dev, AIAgent)
+                        or dev.can_review_pr(pr)
+                    )
+                ]
 
             if not available_reviewers:
                 continue
@@ -169,7 +214,12 @@ class SDLCSimulation(Simulation):
             self.log_event(
                 event_type="review_assigned",
                 agent_id=reviewer.agent_id,
-                data={"pr_id": pr.pr_id, "author_id": pr.author_id}
+                data={
+                    "pr_id": pr.pr_id,
+                    "author_id": pr.author_id,
+                    "is_ai_pr": is_ai_pr,
+                    "reviewer_is_ai": isinstance(reviewer, AIAgent)
+                }
             )
 
     def _process_pr_merges(self, context: SimulationContext) -> None:
@@ -401,24 +451,49 @@ class SDLCSimulation(Simulation):
         """
         Calculate current simulation metrics.
 
+        Includes both aggregate and AI-specific metrics.
+
         Returns:
             Dictionary of metrics
         """
         total_devs = len(self.developers)
+        human_count = len(self.human_developers)
+        ai_count = len(self.ai_agents)
+
         total_prs = len(self.all_prs)
         merged_count = len(self.merged_prs)
         reverted_count = len(self.reverted_prs)
+
+        # Separate AI vs human PRs
+        ai_prs = [pr for pr in self.all_prs if pr.metadata.get('created_by_ai', False)]
+        human_prs = [pr for pr in self.all_prs if not pr.metadata.get('created_by_ai', False)]
+
+        ai_merged = [pr for pr in self.merged_prs if pr.metadata.get('created_by_ai', False)]
+        human_merged = [pr for pr in self.merged_prs if not pr.metadata.get('created_by_ai', False)]
+
+        ai_reverted = [pr for pr in self.reverted_prs if pr.metadata.get('created_by_ai', False)]
+        human_reverted = [pr for pr in self.reverted_prs if not pr.metadata.get('created_by_ai', False)]
 
         # Calculate average cycle time
         cycle_times = [pr.cycle_time for pr in self.merged_prs if pr.cycle_time is not None]
         avg_cycle_time = sum(cycle_times) / len(cycle_times) if cycle_times else 0
 
+        ai_cycle_times = [pr.cycle_time for pr in ai_merged if pr.cycle_time is not None]
+        avg_ai_cycle_time = sum(ai_cycle_times) / len(ai_cycle_times) if ai_cycle_times else 0
+
+        human_cycle_times = [pr.cycle_time for pr in human_merged if pr.cycle_time is not None]
+        avg_human_cycle_time = sum(human_cycle_times) / len(human_cycle_times) if human_cycle_times else 0
+
         # Calculate change failure rate
         change_failure_rate = reverted_count / merged_count if merged_count > 0 else 0
+        ai_failure_rate = len(ai_reverted) / len(ai_merged) if ai_merged else 0
+        human_failure_rate = len(human_reverted) / len(human_merged) if human_merged else 0
 
         # Calculate throughput (PRs per week)
         weeks = max(1, self.current_timestep // 7)
         prs_per_week = merged_count / weeks
+        ai_prs_per_week = len(ai_merged) / weeks
+        human_prs_per_week = len(human_merged) / weeks
 
         # Calculate communication overhead
         comm_overhead = self.calculate_communication_overhead(total_devs)
@@ -433,10 +508,18 @@ class SDLCSimulation(Simulation):
         mttr_values = [i.time_to_resolve for i in resolved_incidents if i.time_to_resolve is not None]
         avg_mttr = sum(mttr_values) / len(mttr_values) if mttr_values else 0
 
+        # AI-specific metrics
+        total_ai_cost = sum(agent.total_cost_incurred for agent in self.ai_agents)
+        avg_ai_cost_per_pr = total_ai_cost / len(ai_prs) if ai_prs else 0
+
         return {
             "current_day": self.current_timestep,
             "current_week": self.current_timestep // 7,
+            # Team composition
             "total_developers": total_devs,
+            "human_developers": human_count,
+            "ai_agents": ai_count,
+            # Overall metrics
             "total_prs_created": total_prs,
             "total_prs_merged": merged_count,
             "total_prs_reverted": reverted_count,
@@ -445,6 +528,22 @@ class SDLCSimulation(Simulation):
             "change_failure_rate": round(change_failure_rate, 3),
             "prs_per_week": round(prs_per_week, 2),
             "communication_overhead": round(comm_overhead, 2),
+            # Human-specific metrics
+            "human_prs_created": len(human_prs),
+            "human_prs_merged": len(human_merged),
+            "human_prs_reverted": len(human_reverted),
+            "human_failure_rate": round(human_failure_rate, 3),
+            "human_prs_per_week": round(human_prs_per_week, 2),
+            "human_avg_cycle_time_days": round(avg_human_cycle_time, 2),
+            # AI-specific metrics
+            "ai_prs_created": len(ai_prs),
+            "ai_prs_merged": len(ai_merged),
+            "ai_prs_reverted": len(ai_reverted),
+            "ai_failure_rate": round(ai_failure_rate, 3),
+            "ai_prs_per_week": round(ai_prs_per_week, 2),
+            "ai_avg_cycle_time_days": round(avg_ai_cycle_time, 2),
+            "ai_total_cost": round(total_ai_cost, 2),
+            "ai_avg_cost_per_pr": round(avg_ai_cost_per_pr, 2),
             # Technical debt metrics
             "tech_debt_count": debt_stats["active_debt_count"],
             "tech_debt_productivity_impact": round(debt_stats["productivity_impact"], 3),
@@ -461,33 +560,54 @@ class SDLCSimulation(Simulation):
         """Print a summary of the simulation state."""
         metrics = self.get_metrics()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'='*70}")
         print(f"Simulation: {self.name}")
-        print(f"{'='*60}")
+        print(f"{'='*70}")
         print(f"Day {metrics['current_day']} (Week {metrics['current_week']})")
-        print(f"\nTeam:")
-        print(f"  Developers: {metrics['total_developers']}")
+        print(f"\nTeam Composition:")
+        print(f"  Total Developers: {metrics['total_developers']}")
+        print(f"  - Humans: {metrics['human_developers']}")
+        print(f"  - AI Agents: {metrics['ai_agents']}")
         print(f"  Communication Overhead: {metrics['communication_overhead']}x")
-        print(f"\nDelivery:")
+
+        print(f"\nOverall Delivery:")
         print(f"  PRs Created: {metrics['total_prs_created']}")
         print(f"  PRs Merged: {metrics['total_prs_merged']}")
         print(f"  PRs Reverted: {metrics['total_prs_reverted']}")
         print(f"  Open PRs: {metrics['open_prs']}")
-        print(f"\nQuality Metrics:")
         print(f"  Avg Cycle Time: {metrics['avg_cycle_time_days']} days")
         print(f"  Change Failure Rate: {metrics['change_failure_rate']:.1%}")
         print(f"  Throughput: {metrics['prs_per_week']} PRs/week")
+
+        if metrics['ai_agents'] > 0:
+            print(f"\nHuman Developers:")
+            print(f"  PRs Created: {metrics['human_prs_created']}")
+            print(f"  PRs Merged: {metrics['human_prs_merged']}")
+            print(f"  Failure Rate: {metrics['human_failure_rate']:.1%}")
+            print(f"  Throughput: {metrics['human_prs_per_week']:.1f} PRs/week")
+            print(f"  Avg Cycle Time: {metrics['human_avg_cycle_time_days']:.1f} days")
+
+            print(f"\nAI Agents:")
+            print(f"  PRs Created: {metrics['ai_prs_created']}")
+            print(f"  PRs Merged: {metrics['ai_prs_merged']}")
+            print(f"  Failure Rate: {metrics['ai_failure_rate']:.1%}")
+            print(f"  Throughput: {metrics['ai_prs_per_week']:.1f} PRs/week")
+            print(f"  Avg Cycle Time: {metrics['ai_avg_cycle_time_days']:.1f} days")
+            print(f"  Total Cost: ${metrics['ai_total_cost']:.2f}")
+            print(f"  Avg Cost/PR: ${metrics['ai_avg_cost_per_pr']:.2f}")
+
         print(f"\nTechnical Debt:")
         print(f"  Active Debt Items: {metrics['tech_debt_count']}")
         print(f"  Productivity Impact: {metrics['tech_debt_productivity_impact']:.1%}")
         print(f"  Total Created: {metrics['tech_debt_total_created']}")
+
         print(f"\nIncidents:")
         print(f"  Total Incidents: {metrics['total_incidents']}")
         print(f"  Active: {metrics['active_incidents']}")
         print(f"  Resolved: {metrics['resolved_incidents']}")
         if metrics['avg_mttr_days'] > 0:
             print(f"  Avg MTTR: {metrics['avg_mttr_days']} days")
-        print(f"{'='*60}\n")
+        print(f"{'='*70}\n")
 
     # Event tracking convenience methods
 

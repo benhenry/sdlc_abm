@@ -1,0 +1,107 @@
+# Mixed Team Scenario - Humans + AI Agents
+#
+# This scenario demonstrates a team composition with both human developers
+# and AI agents working together. Use this to explore productivity trade-offs,
+# cost-benefit analysis, and optimal team compositions.
+
+name: "Mixed Team: 5 Humans + 4 AI Agents"
+description: |
+  A balanced team with senior and mid-level human developers augmented
+  by AI agents using Claude Sonnet. This configuration aims to maximize
+  throughput while maintaining quality through human review.
+
+tags:
+  - mixed-team
+  - ai-agents
+  - production-ready
+
+team:
+  # Human developers - explicit configuration
+  developers:
+    - name: "Alice (Tech Lead)"
+      experience_level: "senior"
+      productivity_rate: 4.0
+      code_quality: 0.88
+      review_capacity: 6.0
+      onboarding_time: 6
+      availability: 0.70
+      meeting_hours_per_week: 7.0
+      specializations:
+        - architecture
+        - backend
+
+    - name: "Bob (Senior)"
+      experience_level: "senior"
+      productivity_rate: 4.0
+      code_quality: 0.87
+      review_capacity: 6.0
+      onboarding_time: 6
+      availability: 0.72
+      meeting_hours_per_week: 6.0
+      specializations:
+        - frontend
+        - testing
+
+    - name: "Carol (Mid)"
+      experience_level: "mid"
+      productivity_rate: 3.5
+      code_quality: 0.85
+      review_capacity: 5.0
+      onboarding_time: 10
+      availability: 0.75
+      meeting_hours_per_week: 5.0
+
+    - name: "David (Mid)"
+      experience_level: "mid"
+      productivity_rate: 3.5
+      code_quality: 0.84
+      review_capacity: 5.0
+      onboarding_time: 10
+      availability: 0.75
+      meeting_hours_per_week: 5.0
+
+    - name: "Eve (Junior)"
+      experience_level: "junior"
+      productivity_rate: 2.0
+      code_quality: 0.75
+      review_capacity: 3.0
+      onboarding_time: 16
+      availability: 0.70
+      meeting_hours_per_week: 5.0
+
+  # AI agents - explicit configuration
+  ai_agents:
+    - name: "AI-Sonnet-1"
+      model_type: "claude-sonnet"
+      # Uses model defaults: 10 PRs/week, 0.85 quality, $0.30/PR
+      specializations:
+        - refactoring
+        - testing
+
+    - name: "AI-Sonnet-2"
+      model_type: "claude-sonnet"
+      specializations:
+        - documentation
+        - bug-fixes
+
+    - name: "AI-Sonnet-3"
+      model_type: "claude-sonnet"
+      specializations:
+        - feature-development
+
+    - name: "AI-CodeLlama-1"
+      model_type: "codellama"
+      # Fast code generation: 12 PRs/week, 0.80 quality, $0.10/PR
+      specializations:
+        - boilerplate
+        - routine-tasks
+
+simulation:
+  duration_weeks: 12
+  timestep_days: 1
+  random_seed: 42
+  communication_loss_factor: 0.3  # 30% information loss (typical team)
+  communication_overhead_model: "quadratic"
+
+author: "SDLC SimLab"
+created_at: "2025-01-21"

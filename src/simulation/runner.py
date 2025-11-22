@@ -8,6 +8,7 @@ from typing import Optional, Union
 from .config import ScenarioConfig
 from .engine import SDLCSimulation
 from .agents.developer import Developer
+from .agents.ai_agent import AIAgent
 
 
 class ScenarioRunner:
@@ -71,11 +72,17 @@ class ScenarioRunner:
             communication_overhead_model=self.scenario.get_communication_overhead_model()
         )
 
-        # Add developers to the simulation
+        # Add human developers to the simulation
         developer_configs = self.scenario.team.get_developers()
         for dev_config in developer_configs:
             developer = Developer(config=dev_config)
             sim.add_developer(developer)
+
+        # Add AI agents to the simulation
+        ai_agent_configs = self.scenario.team.get_ai_agents()
+        for ai_config in ai_agent_configs:
+            ai_agent = AIAgent(config=ai_config)
+            sim.add_ai_agent(ai_agent)
 
         self.simulation = sim
         return sim
@@ -99,7 +106,11 @@ class ScenarioRunner:
             print(f"{'='*80}")
             if self.scenario.description:
                 print(f"{self.scenario.description}\n")
-            print(f"Team Size: {len(self.simulation.developers)} developers")
+            human_count = len(self.simulation.human_developers)
+            ai_count = len(self.simulation.ai_agents)
+            print(f"Team Size: {len(self.simulation.developers)} total")
+            print(f"  - Humans: {human_count}")
+            print(f"  - AI Agents: {ai_count}")
             print(f"Duration: {self.scenario.simulation.duration_weeks} weeks")
             print(f"Communication Loss: {self.scenario.simulation.communication_loss_factor:.0%}")
             print(f"Overhead Model: {self.scenario.simulation.communication_overhead_model}")

@@ -2,14 +2,33 @@
 
 This guide will help you set up your development environment and start working on SDLC SimLab.
 
+## Quick Start
+
+```bash
+# Clone and setup
+git clone <repository-url>
+cd sdlc_abm
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+pip install -r requirements.txt
+
+# Run your first simulation!
+python examples/mixed_team_simulation.py
+```
+
+That's it! The simulation engine is fully functional. Continue reading for more details.
+
 ## Prerequisites
 
-- **Python 3.11+**: Required for the simulation engine and API
-- **Node.js 18+**: Required for the React frontend (when implemented)
-- **PostgreSQL 14+**: Primary database (or use SQLite for local dev)
-- **Redis 7+**: For Celery task queue and caching
-- **Docker** (optional): For running dependencies in containers
+### Required (Phase 1)
+- **Python 3.11+**: Required for the simulation engine
 - **Git**: Version control
+
+### Optional (Phase 2 - Not Yet Needed)
+- **Node.js 18+**: For React frontend (Phase 2)
+- **PostgreSQL 14+**: For API database (Phase 2)
+- **Redis 7+**: For Celery task queue (Phase 2)
+- **Docker**: For running dependencies in containers (Phase 2)
 
 ## Initial Setup
 
@@ -35,7 +54,29 @@ venv\Scripts\activate  # On Windows
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment Variables
+### 3. Verify Installation
+
+```bash
+# Activate virtual environment
+source venv/bin/activate
+
+# Run tests to verify everything is working
+python -m pytest tests/unit/test_ai_agent.py -v
+
+# Run an example simulation
+python examples/basic_simulation.py
+```
+
+That's it! You're ready to run simulations.
+
+### Phase 2 Setup (Database, Redis, API)
+
+The following setup steps are only needed when working on Phase 2 features:
+
+<details>
+<summary>Click to expand Phase 2 setup instructions</summary>
+
+#### Configure Environment Variables
 
 ```bash
 # Copy the example environment file
@@ -46,9 +87,7 @@ cp .env.example .env
 # DATABASE_URL=sqlite:///./sdlc_simlab.db
 ```
 
-### 4. Set Up Database (PostgreSQL)
-
-If using PostgreSQL instead of SQLite:
+#### Set Up Database (PostgreSQL)
 
 ```bash
 # Using Docker
@@ -63,7 +102,7 @@ docker run --name sdlc-postgres \
 # DATABASE_URL=postgresql://sdlc_user:sdlc_password@localhost:5432/sdlc_simlab
 ```
 
-### 5. Set Up Redis
+#### Set Up Redis
 
 ```bash
 # Using Docker
@@ -76,42 +115,62 @@ docker run --name sdlc-redis \
 # Ubuntu: sudo apt install redis-server
 ```
 
-### 6. Run Database Migrations
+#### Run Database Migrations
 
 ```bash
 # When migrations are implemented
 alembic upgrade head
 ```
 
+</details>
+
 ## Running the Application
 
-### Development Mode
+### Current Status (Phase 1 - Complete ✅)
 
-#### Option 1: Run Components Separately
+The **simulation engine** is fully functional and can be run via Python scripts and YAML configurations.
+The **API server** and **frontend** are planned for Phase 2 and are not yet implemented.
 
-```bash
-# Terminal 1: Start Redis (if not running)
-redis-server
-
-# Terminal 2: Start API server
-source venv/bin/activate
-uvicorn src.api.main:app --reload --port 8000
-
-# Terminal 3: Start Celery worker
-source venv/bin/activate
-celery -A src.api.celery_app worker --loglevel=info
-
-# Terminal 4: Start React frontend (when implemented)
-cd src/frontend
-npm install
-npm run dev
-```
-
-#### Option 2: Use Docker Compose (when implemented)
+### Running Simulations
 
 ```bash
-docker-compose up
+# Activate virtual environment
+source venv/bin/activate
+
+# Run basic human-only team simulation
+python examples/basic_simulation.py
+
+# Run mixed human/AI team comparison
+python examples/mixed_team_simulation.py
+
+# Run diminishing returns analysis
+python examples/diminishing_returns_analysis.py
+
+# Run a scenario from YAML configuration
+python examples/run_scenario.py data/scenarios/mixed_team_example.yaml
+
+# Import historical data from CSV
+python examples/import_historical_data.py data/samples/sample_metrics.csv
 ```
+
+### Phase 2: API Server & Frontend (Not Yet Implemented)
+
+The following components are planned for Phase 2 (months 4-6):
+
+```bash
+# API server (Phase 2 - NOT YET IMPLEMENTED)
+# uvicorn src.api.main:app --reload --port 8000
+
+# Celery worker (Phase 2 - NOT YET IMPLEMENTED)
+# celery -A src.api.celery_app worker --loglevel=info
+
+# React frontend (Phase 2 - NOT YET IMPLEMENTED)
+# cd src/frontend
+# npm install
+# npm run dev
+```
+
+For now, all simulations are run via Python scripts or YAML configuration files.
 
 ## Running Tests
 

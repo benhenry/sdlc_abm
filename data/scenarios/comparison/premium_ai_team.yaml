@@ -1,0 +1,36 @@
+# Premium AI Model Team
+#
+# Uses higher-quality but more expensive AI model (Claude Opus).
+# Tests quality vs cost trade-offs.
+
+name: "Premium: 5 Humans + 4 AI (Opus)"
+description: Team using premium AI model for higher quality
+
+tags:
+  - comparison
+  - mixed-team
+  - premium
+
+team:
+  distribution:
+    senior: 1
+    mid: 3
+    junior: 1
+
+  # Explicit AI configuration with premium model
+  ai_agents:
+    - name: "AI-Opus-1"
+      model_type: "claude-opus"
+    - name: "AI-Opus-2"
+      model_type: "claude-opus"
+    - name: "AI-Opus-3"
+      model_type: "claude-opus"
+    - name: "AI-Opus-4"
+      model_type: "claude-opus"
+
+simulation:
+  duration_weeks: 12
+  timestep_days: 1
+  random_seed: 42
+  communication_loss_factor: 0.3
+  communication_overhead_model: "quadratic"

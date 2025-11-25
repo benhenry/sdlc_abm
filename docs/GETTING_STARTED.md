@@ -146,11 +146,44 @@ python examples/mixed_team_simulation.py
 # Run diminishing returns analysis
 python examples/diminishing_returns_analysis.py
 
+# Compare multiple scenarios side-by-side (NEW!)
+python examples/compare_scenarios.py
+
 # Run a scenario from YAML configuration
 python examples/run_scenario.py data/scenarios/mixed_team_example.yaml
 
 # Import historical data from CSV
 python examples/import_historical_data.py data/samples/sample_metrics.csv
+```
+
+### Scenario Comparison Tool
+
+Compare multiple team configurations to find the optimal balance:
+
+```python
+from src.simulation.comparison import ScenarioComparison
+
+# Create comparison
+comparison = ScenarioComparison()
+
+# Add scenarios
+comparison.add_scenario("data/scenarios/comparison/baseline_human_only.yaml")
+comparison.add_scenario("data/scenarios/comparison/balanced_mixed_team.yaml")
+
+# Run all and compare
+results = comparison.run_all()
+comparison.print_comparison()
+
+# Export results
+comparison.export_to_json("comparison_results.json")
+comparison.export_to_csv("comparison_results.csv")
+```
+
+Pre-built comparison scenarios:
+- `baseline_human_only.yaml` - 7 humans only
+- `balanced_mixed_team.yaml` - 5 humans + 4 AI agents
+- `ai_heavy_team.yaml` - 3 humans + 10 AI agents
+- `premium_ai_team.yaml` - 5 humans + 4 Opus AI agents
 ```
 
 ### Phase 2: API Server & Frontend (Not Yet Implemented)

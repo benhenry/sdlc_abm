@@ -1,0 +1,28 @@
+# Balanced Mixed Team
+#
+# Mix of humans and AI agents with balanced ratio.
+# Tests moderate AI augmentation approach.
+
+name: "Balanced: 5 Humans + 4 AI"
+description: Balanced team with humans and AI agents working together
+
+tags:
+  - comparison
+  - mixed-team
+  - balanced
+
+team:
+  distribution:
+    senior: 1
+    mid: 3
+    junior: 1
+
+  ai_count: 4
+  ai_model_type: "claude-sonnet"
+
+simulation:
+  duration_weeks: 12
+  timestep_days: 1
+  random_seed: 42
+  communication_loss_factor: 0.3
+  communication_overhead_model: "quadratic"

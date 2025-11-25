@@ -1,0 +1,25 @@
+# Baseline: All Human Team
+#
+# Traditional software team with no AI augmentation.
+# Use as baseline for comparing against AI-augmented teams.
+
+name: "Baseline: 7 Humans Only"
+description: Traditional team composition with senior/mid/junior distribution
+
+tags:
+  - baseline
+  - comparison
+  - human-only
+
+team:
+  distribution:
+    senior: 2
+    mid: 4
+    junior: 1
+
+simulation:
+  duration_weeks: 12
+  timestep_days: 1
+  random_seed: 42
+  communication_loss_factor: 0.3
+  communication_overhead_model: "quadratic"

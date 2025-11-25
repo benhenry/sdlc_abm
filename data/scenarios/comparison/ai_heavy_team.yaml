@@ -1,0 +1,27 @@
+# AI-Heavy Team
+#
+# Smaller human team with large AI augmentation.
+# Tests high AI ratio with minimal human oversight.
+
+name: "AI-Heavy: 3 Humans + 10 AI"
+description: Small human team augmented with many AI agents
+
+tags:
+  - comparison
+  - mixed-team
+  - ai-heavy
+
+team:
+  distribution:
+    senior: 2
+    mid: 1
+
+  ai_count: 10
+  ai_model_type: "claude-sonnet"
+
+simulation:
+  duration_weeks: 12
+  timestep_days: 1
+  random_seed: 42
+  communication_loss_factor: 0.3
+  communication_overhead_model: "quadratic"

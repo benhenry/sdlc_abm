@@ -19,15 +19,17 @@ SDLC SimLab provides a simulation environment to explore these questions before 
 
 ### Phase 1: Foundation (Months 1-3)
 - ✅ Project initialization and architecture
-- ✅ Core simulation engine with basic agent model
-- ✅ Single scenario simulation (basic_simulation.py example)
+- ✅ Core simulation engine with agent-based modeling
+- ✅ Human developer agents with onboarding and productivity models
+- ✅ AI agent system (GPT-4, Claude Sonnet/Opus, CodeLlama)
+- ✅ Single scenario simulation with examples
 - ✅ YAML/JSON scenario configuration system
 - ✅ CSV data import for historical metrics
 - ✅ Technical debt and incident tracking
 
 ### Phase 2: Enhancements (Months 4-6)
 - ⏳ GitHub/GitLab integration for automatic data import
-- ⏳ Scenario comparison mode
+- ✅ Scenario comparison mode with export to JSON/CSV
 - ⏳ Enhanced visualizations (D3.js/Plotly)
 - ⏳ Model calibration tools
 - ⏳ Alpha release

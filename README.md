@@ -27,10 +27,17 @@ SDLC SimLab provides a simulation environment to explore these questions before 
 - ✅ CSV data import for historical metrics
 - ✅ Technical debt and incident tracking
 
-### Phase 2: Enhancements (Months 4-6)
+### Phase 2: Web Application (Months 4-6)
+- ✅ FastAPI backend with async SQLAlchemy + PostgreSQL
+- ✅ Celery + Redis for background simulation execution
+- ✅ RESTful API endpoints (scenarios, simulations, comparisons)
+- ✅ WebSocket support for real-time progress updates
+- ✅ React frontend with TypeScript + Vite
+- ✅ Dashboard and scenario library views
+- ✅ Docker Compose development environment
 - ⏳ GitHub/GitLab integration for automatic data import
-- ✅ Scenario comparison mode with export to JSON/CSV
-- ⏳ Enhanced visualizations (D3.js/Plotly)
+- ⏳ Enhanced visualizations (Charts, metrics dashboard)
+- ⏳ Scenario builder wizard
 - ⏳ Model calibration tools
 - ⏳ Alpha release
 
@@ -73,23 +80,73 @@ SDLC SimLab provides a simulation environment to explore these questions before 
 
 ## Getting Started
 
-### Quick Start
+### Prerequisites
+
+- Docker and Docker Compose (recommended)
+- OR: Python 3.11+, Node.js 18+, PostgreSQL 15+, Redis 7+
+
+### Quick Start with Docker (Recommended)
 
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd sdlc_abm
 
+# Start all services (API, Database, Redis, Celery, Frontend)
+docker-compose up -d
+
+# Check logs
+docker-compose logs -f
+
+# Access the application
+# Frontend: http://localhost:3000
+# API Docs: http://localhost:8000/api/docs
+# Health Check: http://localhost:8000/health
+
+# Run database migrations
+docker-compose exec api alembic upgrade head
+
+# Stop all services
+docker-compose down
+```
+
+### Local Development without Docker
+
+```bash
 # Set up Python environment
 python -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -r requirements.txt
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your configuration
+# Start PostgreSQL and Redis (via Docker or locally)
+docker-compose up -d postgres redis
 
-# Run tests (when implemented)
+# Run database migrations
+alembic upgrade head
+
+# Start API server
+uvicorn src.api.main:app --reload
+
+# Start Celery worker (in another terminal)
+celery -A src.api.tasks worker --loglevel=info
+
+# Start frontend (in another terminal)
+cd src/frontend
+npm install
+npm run dev
+```
+
+### Running the Simulation Engine (CLI)
+
+```bash
+# Activate virtual environment
+source venv/bin/activate
+
+# Run example simulations
+python examples/basic_simulation.py
+python examples/mixed_team_simulation.py
+
+# Run tests
 pytest tests/
 ```
 
@@ -201,4 +258,4 @@ Built by Ben Henry as a learning project with Claude Code.
 
 ---
 
-**Status**: 🚧 Early Development - Project initialization complete, core simulation engine next.
+**Status**: 🚀 Phase 2 In Progress - Core simulation engine complete, web application foundation built, advanced features in development.

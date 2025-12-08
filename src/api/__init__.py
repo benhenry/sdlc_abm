@@ -1,3 +1,6 @@
+"""SDLC SimLab API
+
+FastAPI-based REST API for the SDLC simulation engine.
 """
-API Layer - RESTful API for simulation control and data access
-"""
+
+__version__ = "0.2.0"

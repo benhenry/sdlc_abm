@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Examples (not needed in container)
+examples/
+
+# Node/Frontend (built separately)
+node_modules/
+src/frontend/node_modules/
+src/frontend/dist/
+src/frontend/build/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Alembic (already copied in main COPY)
+alembic.ini
+
+# Environment files
+.env
+.env.*
+!.env.example

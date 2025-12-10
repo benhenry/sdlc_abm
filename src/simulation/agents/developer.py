@@ -111,6 +111,11 @@ class Developer(Agent):
             40.0 * self.config.availability * (1.0 - meeting_fraction)
         )
 
+        # Initialize productivity multiplier based on onboarding status
+        # If developer needs onboarding, start at 0% productivity
+        if self.config.onboarding_time > 0 and not self.is_fully_onboarded:
+            self.config.current_productivity_multiplier = 0.0
+
     def step(self, context: SimulationContext) -> None:
         """
         Execute one simulation step (typically 1 day).

@@ -12,7 +12,6 @@ import {
 import { simulationService } from '../services/simulations'
 import { scenarioService } from '../services/scenarios'
 import type { SimulationRun, Scenario } from '../types'
-import clsx from 'clsx'
 
 export default function Dashboard() {
   const [recentSimulations, setRecentSimulations] = useState<SimulationRun[]>([])
